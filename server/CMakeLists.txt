@@ -31,6 +31,8 @@ set(PROJECT_SOURCES
     mainwindow.h
     mainwindow.ui
     resource.qrc
+    aws.cpp
+    aws.h
 )
 set( PROJECT_HEADERS
 
