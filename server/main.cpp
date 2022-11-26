@@ -23,13 +23,7 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
 
-    argc = 4;
     char name[3][20] = {"coordinate", "drone_key", "1"};
-
-    if (argc < 4)
-        return 1;
-
-
     Aws::SDKOptions options;
 
     Aws::InitAPI(options);
