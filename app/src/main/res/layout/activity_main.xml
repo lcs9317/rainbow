@@ -42,6 +42,12 @@
         android:layout_height="wrap_content"
         android:text="도착지 설정하기"/>
 
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="서버에 좌표전송"/>
+
 
     <fragment
         android:layout_width="match_parent"

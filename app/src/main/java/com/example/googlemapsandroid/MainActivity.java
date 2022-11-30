@@ -1,30 +1,24 @@
 package com.example.googlemapsandroid;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -44,9 +38,18 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.snackbar.Snackbar;
 
-import java.io.IOException;
+import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SqsException;
 
 
 public class MainActivity extends AppCompatActivity
@@ -59,7 +62,12 @@ public class MainActivity extends AppCompatActivity
     private TextView textView1;
     private TextView textView2;
     private Button button1;
+    private Button button2;
     private Boolean Firstzoom = true;
+    private Boolean destinationchecker = false;
+
+    private static final String QUEUE_NAME = "testQueue" +
+            new Date().getTime();
 
     private static final String TAG = "googlemap_example";
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
@@ -103,12 +111,19 @@ public class MainActivity extends AppCompatActivity
         textView1 = findViewById(R.id.textView1);
         textView2 = findViewById(R.id.textView2);
         button1 = findViewById(R.id.button1);
+        button2 = findViewById(R.id.button2);
 
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 button1click();
             }
+        });
+
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                button2click(); }
         });
 
         locationRequest = new LocationRequest()
@@ -225,8 +240,6 @@ public class MainActivity extends AppCompatActivity
 
         }
 
-
-
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
         // 현재 오동작을 해서 주석처리
         //mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
@@ -239,6 +252,46 @@ public class MainActivity extends AppCompatActivity
             }
         });
     }
+
+    private void button2click() {
+
+        String queueUrl = "https://sqs.ap-northeast-1.amazonaws.com/567042749692/message";
+
+        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(
+                "AKIAYIBTBWT6IM47ATFP",
+                "sWV9kxhQa04dnw4tBsAMI5OYX9GsqffeiohpL35i");
+
+        SqsClient sqsClient = SqsClient.builder()
+                .region(Region.AP_NORTHEAST_1)
+                .httpClient(UrlConnectionHttpClient.builder().build())
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .build();
+
+        System.out.println(queueUrl);
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        executorService.submit(() -> {
+            sendingMessage(sqsClient, queueUrl);
+        });
+        executorService.shutdown();
+    }
+
+    public static void sendingMessage(SqsClient sqsClient, String queueUrl) {
+
+        try {
+            SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .messageBody("So difficult!")
+                    .delaySeconds(10)
+                    .build();
+
+            sqsClient.sendMessage(sendMsgRequest);
+        } catch (SqsException e){
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+    }
+
+
 
     private void button1click() {
         if (destinationMarker != null) destinationMarker.remove();
@@ -398,9 +451,10 @@ public class MainActivity extends AppCompatActivity
 
         textView1.setText(markerSnippet);
 
-        if(Firstzoom)
+        if(Firstzoom) {
             mMap.animateCamera(cameraUpdate);
-        Firstzoom = false;
+            Firstzoom = false;
+        }
     }
 
     public void setDefaultLocation() {
