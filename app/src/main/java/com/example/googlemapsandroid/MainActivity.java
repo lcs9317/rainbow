@@ -39,6 +39,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,6 +48,12 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
@@ -84,13 +91,14 @@ public class MainActivity extends AppCompatActivity
     String[] REQUIRED_PERMISSIONS  = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};  // 외부 저장소
 
 
-    Location mCurrentLocatiion;
+    Location mCurrentLocation;
     LatLng currentPosition;
 
 
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest;
     private Location location;
+    private Location dlocation;
 
 
     private View mLayout;  // Snackbar 사용하기 위해서는 View가 필요합니다.
@@ -254,25 +262,99 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void button2click() {
+        if(!destinationchecker)
+        {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("도착지 미설정");
+            builder.setMessage("도착지가 설정되지 않았습니다.\n"
+                    + "도착지 설정하기 버튼을 눌러 도착지를 설정해주세요.");
+            builder.setCancelable(true);
+            builder.setNegativeButton("확인", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.cancel();
+                }
+            });
+            builder.create().show();
+        }
+        else {
 
-        String queueUrl = "https://sqs.ap-northeast-1.amazonaws.com/567042749692/message";
+            //String queueUrl = "https://sqs.ap-northeast-1.amazonaws.com/567042749692/message";
 
-        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(
-                "AKIAYIBTBWT6IM47ATFP",
-                "sWV9kxhQa04dnw4tBsAMI5OYX9GsqffeiohpL35i");
+            AwsBasicCredentials awsCreds = AwsBasicCredentials.create(
+                    "AKIAYIBTBWT6IM47ATFP",
+                    "sWV9kxhQa04dnw4tBsAMI5OYX9GsqffeiohpL35i");
 
-        SqsClient sqsClient = SqsClient.builder()
-                .region(Region.AP_NORTHEAST_1)
-                .httpClient(UrlConnectionHttpClient.builder().build())
-                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+            DynamoDbClient ddb = DynamoDbClient.builder()
+                    .region(Region.AP_NORTHEAST_1)
+                    .httpClient(UrlConnectionHttpClient.builder().build())
+                    .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                    .build();
+
+            String tableName = "drones";
+            String drone_key = "drone_key";
+            String drone_keyVal = "1";
+            String s1 = "s1";
+            String s1Val = String.format("%.7f",location.getLatitude());
+            String s2 = "s2";
+            String s2Val = String.format("%.7f",location.getLongitude());
+            String e1 = "e1";
+            String e1Val = String.format("%.7f",destinationMarker.getPosition().latitude);
+            String e2 = "e2";
+            String e2Val = String.format("%.7f",destinationMarker.getPosition().longitude);
+            String altitude = "altitude";
+            String altitudeVal = String.format("%.7f",location.getAltitude());
+
+            ExecutorService executorService = Executors.newCachedThreadPool();
+
+            executorService.submit(() -> {
+                putItemInTable(ddb, tableName, drone_key, drone_keyVal, s1, s1Val, s2, s2Val, e1, e1Val, e2, e2Val, altitude, altitudeVal);
+                //sendingMessage(sqsClient, queueUrl);
+                ddb.close();
+            });
+            executorService.shutdown();
+        }
+    }
+    public static void putItemInTable(DynamoDbClient ddb,
+                                      String tableName,
+                                      String drone_key,
+                                      String drone_keyVal,
+                                      String s1,
+                                      String s1Val,
+                                      String s2,
+                                      String s2Val,
+                                      String e1,
+                                      String e1Val,
+                                      String e2,
+                                      String e2Val,
+                                      String altitude,
+                                      String altitudeVal){
+
+        HashMap<String, AttributeValue> itemValues = new HashMap<>();
+        itemValues.put(drone_key, AttributeValue.builder().s(drone_keyVal).build());
+        itemValues.put(s1, AttributeValue.builder().s(s1Val).build());
+        itemValues.put(s2, AttributeValue.builder().s(s2Val).build());
+        itemValues.put(e1, AttributeValue.builder().s(e1Val).build());
+        itemValues.put(e2, AttributeValue.builder().s(e2Val).build());
+        itemValues.put(altitude, AttributeValue.builder().s(altitudeVal).build());
+
+        PutItemRequest request = PutItemRequest.builder()
+                .tableName(tableName)
+                .item(itemValues)
                 .build();
 
-        System.out.println(queueUrl);
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        executorService.submit(() -> {
-            sendingMessage(sqsClient, queueUrl);
-        });
-        executorService.shutdown();
+        try {
+            PutItemResponse response = ddb.putItem(request);
+            System.out.println(tableName +" was successfully updated. The request id is "+response.responseMetadata().requestId());
+
+        } catch (ResourceNotFoundException e) {
+            System.err.format("Error: The Amazon DynamoDB table \"%s\" can't be found.\n", tableName);
+            System.err.println("Be sure that it exists and that you've typed its name correctly!");
+            System.exit(1);
+        } catch (DynamoDbException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        }
     }
 
     public static void sendingMessage(SqsClient sqsClient, String queueUrl) {
@@ -295,6 +377,8 @@ public class MainActivity extends AppCompatActivity
 
     private void button1click() {
         if (destinationMarker != null) destinationMarker.remove();
+
+        destinationchecker = true;
 
         LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude()+0.003);
 
@@ -359,7 +443,7 @@ public class MainActivity extends AppCompatActivity
                 //현재 위치에 마커 생성하고 이동
                 setCurrentLocation(location, markerTitle, markerSnippet);
 
-                mCurrentLocatiion = location;
+                mCurrentLocation = location;
             }
 
 
