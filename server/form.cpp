@@ -8,6 +8,12 @@
 #include <QFrame>
 #include <QtWebView>
 #include <QUrl>
+#include <QJSEngine>
+#include "dbserver.h"
+#include <QWebEngineScript>
+#include <QFile>
+#include <iostream>
+
 
 Form::Form(QWidget *parent) :
     QWidget(parent),
@@ -23,20 +29,40 @@ Form::Form(QWidget *parent) :
     QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
     ui->lePostalAddress->setText("");
     ui->webView->setUrl(QUrl("qrc:/html/google_maps.html"));
+    connect(ui->webView->page(), SIGNAL(loadFinished(bool)), this, SLOT(webView(bool)));
+
+    double **coordinate;
+    coordinate = send_coordinate();
+
 }
 
 Form::~Form()
 {
     delete ui;
 }
+void Form::webView(bool ok) {
+    QFile file("../untitled4/coordinate.js");
+    if(!file.open(QIODevice::ReadOnly))
+        qDebug() << "error";
+    QString str;
+    str = file.readAll();
 
+    ui->webView->page()->runJavaScript(str);
+
+
+}
 
 void Form::showCoordinates(double east, double north, bool saveMarker)
 {
-    qDebug() << "Form, showCoordinates" << east << north;
+    double **coordinate;
+    coordinate = send_coordinate();
+    qDebug() << "Form, showCoordinates" << coordinate[0][0] << coordinate[0][1];
+//    qDebug() << "Form, showCoordinates" << east << north;
 
+    east = coordinate[0][0];
+    north = coordinate[0][1];
     QString str =
-            QString("var newLoc = new google.maps.LatLng(%1, %2); ").arg(north).arg(east) +
+            QString("var newLoc = new google.maps.LatLng(%1, %2); ").arg(east).arg(north) +
             QString("map.setCenter(newLoc);") +
             QString("map.setZoom(%1);").arg(ui->zoomSpinBox->value());
 
@@ -73,6 +99,7 @@ void Form::setMarker(double east, double north, QString caption)
 
 void Form::goClicked()
 {
+
     QString address = ui->lePostalAddress->text();
     m_geocodeDataManager.getCoordinates(address.replace(" ", "+"));
 }
@@ -88,14 +115,22 @@ void Form::errorOccured(const QString& error)
 
 void Form::on_lwMarkers_currentRowChanged(int currentRow)
 {
+
+    QWebEngineScript script;
+
+    QWebChannel *channel = new QWebChannel(ui->webView->page());
     if (currentRow < 0) return;
     QString str =
             QString("var newLoc = new google.maps.LatLng(%1, %2); ").arg(m_markers[currentRow]->north).arg(m_markers[currentRow]->east) +
             QString("map.setCenter(newLoc);");
+  //          QString("alert('Hello, world!');");
 
     qDebug() << str;
-
+    channel->registerObject("qtobject",this);
+    script.setSourceCode(str);
+    ui->webView->page()->setWebChannel(channel);
     ui->webView->page()->runJavaScript(str);
+    ui->webView->page()->scripts().insert(script);
 
 }
 

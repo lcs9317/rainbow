@@ -15,7 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Core gui Network webview webeningwidgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core gui Network webview webenginewidgets)
-find_package(AWSSDK REQUIRED COMPONENTS dynamodb)
+find_package(AWSSDK REQUIRED COMPONENTS dynamodb sqs)
+
 set(BUILD_SHARED_LIBS ON CACHE STRING "C:/Program Files (x86)/aws-cpp-sdk-all")
 
 
@@ -33,6 +34,11 @@ set(PROJECT_SOURCES
     resource.qrc
     aws.cpp
     aws.h
+    coordinate.js
+    locationinfo.h
+    locationinfo.cpp
+    dbserver.cpp
+    dbserver.h
 )
 set( PROJECT_HEADERS
 

@@ -6,7 +6,10 @@
 #include <aws/dynamodb/model/AttributeDefinition.h>
 #include <aws/dynamodb/model/GetItemRequest.h>
 #include <iostream>
-
+#include <aws/sqs/SQSClient.h>
+#include <aws/sqs/model/ReceiveMessageRequest.h>
+#include <aws/sqs/model/ReceiveMessageResult.h>
+#include <aws/sqs/model/DeleteMessageRequest.h>
 
 
 int droneDB();

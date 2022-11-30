@@ -46,7 +46,7 @@ private slots:
     //set marker to map and save marker in markers list
     void setMarker(double east, double north, QString caption);
     void errorOccured(const QString&);
-
+    void webView(bool ok);
 
 
     void on_lwMarkers_currentRowChanged(int currentRow);
