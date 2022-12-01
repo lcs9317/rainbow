@@ -41,6 +41,8 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,12 +53,10 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
-import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-import software.amazon.awssdk.services.sqs.model.SqsException;
 
 
 public class MainActivity extends AppCompatActivity
@@ -73,13 +73,16 @@ public class MainActivity extends AppCompatActivity
     private Boolean Firstzoom = true;
     private Boolean destinationchecker = false;
 
+    static int drone = -1;
+    static Boolean emptycheck = false;
+
     private static final String QUEUE_NAME = "testQueue" +
             new Date().getTime();
 
     private static final String TAG = "googlemap_example";
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int UPDATE_INTERVAL_MS = 30000;  // 30초 원래 1초
-    private static final int FASTEST_UPDATE_INTERVAL_MS = 5000; // 5초 원래 0.5초
+    private static final int FASTEST_UPDATE_INTERVAL_MS = 10000; // 5초 원래 0.5초
 
 
     // onRequestPermissionsResult에서 수신된 결과에서 ActivityCompat.requestPermissions를 사용한 퍼미션 요청을 구별하기 위해 사용됩니다.
@@ -293,7 +296,6 @@ public class MainActivity extends AppCompatActivity
 
             String tableName = "drones";
             String drone_key = "drone_key";
-            String drone_keyVal = "1";
             String s1 = "s1";
             String s1Val = String.format("%.7f",location.getLatitude());
             String s2 = "s2";
@@ -305,16 +307,67 @@ public class MainActivity extends AppCompatActivity
             String altitude = "altitude";
             String altitudeVal = String.format("%.7f",location.getAltitude());
 
+
             ExecutorService executorService = Executors.newCachedThreadPool();
 
             executorService.submit(() -> {
-                putItemInTable(ddb, tableName, drone_key, drone_keyVal, s1, s1Val, s2, s2Val, e1, e1Val, e2, e2Val, altitude, altitudeVal);
-                //sendingMessage(sqsClient, queueUrl);
-                ddb.close();
+                 while(!emptycheck) {
+                     drone += 1;
+                     //drone_key 가 100 넘어가면 종료.
+                     if(drone > 100){
+                         System.out.println("DynamoDB is Full");
+                         executorService.shutdown();
+                         break;
+                     }
+                     getDynamoDBItem(ddb, tableName, drone_key, String.valueOf(drone));
+                 }
+                 //System.out.println("drone = " + drone);
+                 //dynamoDB로 좌표 값 전송
+                 putItemInTable(ddb, tableName, drone_key, String.valueOf(drone), s1, s1Val, s2, s2Val, e1, e1Val, e2, e2Val, altitude, altitudeVal);
+                 ddb.close();
             });
             executorService.shutdown();
         }
     }
+
+    public static void getDynamoDBItem(DynamoDbClient ddb,String tableName,String key,String keyVal ) {
+
+        int keycount = 0;
+
+        HashMap<String,AttributeValue> keyToGet = new HashMap<String,AttributeValue>();
+
+        keyToGet.put(key, AttributeValue.builder()
+                .s(keyVal).build());
+
+        GetItemRequest request = GetItemRequest.builder()
+                .key(keyToGet)
+                .tableName(tableName)
+                .build();
+
+        try {
+            Map<String,AttributeValue> returnedItem = ddb.getItem(request).item();
+
+            if (returnedItem != null) {
+                Set<String> keys = returnedItem.keySet();
+
+                for (String key1 : keys) {
+                    System.out.format("%s: %s\n", key1, returnedItem.get(key1).toString());
+                    keycount +=1;
+                }
+
+                if(keycount == 0) {
+                    //System.out.println("keys are empty");
+                    emptycheck = true;
+                }
+            } else {
+                System.out.format("No item found with the key %s!\n", key);
+            }
+        } catch (DynamoDbException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        }
+    }
+
     public static void putItemInTable(DynamoDbClient ddb,
                                       String tableName,
                                       String drone_key,
@@ -356,24 +409,6 @@ public class MainActivity extends AppCompatActivity
             System.exit(1);
         }
     }
-
-    public static void sendingMessage(SqsClient sqsClient, String queueUrl) {
-
-        try {
-            SendMessageRequest sendMsgRequest = SendMessageRequest.builder()
-                    .queueUrl(queueUrl)
-                    .messageBody("So difficult!")
-                    .delaySeconds(10)
-                    .build();
-
-            sqsClient.sendMessage(sendMsgRequest);
-        } catch (SqsException e){
-            System.err.println(e.awsErrorDetails().errorMessage());
-            System.exit(1);
-        }
-    }
-
-
 
     private void button1click() {
         if (destinationMarker != null) destinationMarker.remove();
@@ -445,10 +480,7 @@ public class MainActivity extends AppCompatActivity
 
                 mCurrentLocation = location;
             }
-
-
         }
-
     };
 
     private void startLocationUpdates() {
@@ -477,9 +509,7 @@ public class MainActivity extends AppCompatActivity
 
             if (checkPermission())
                 mMap.setMyLocationEnabled(true);
-
         }
-
     }
 
     @Override
@@ -538,6 +568,10 @@ public class MainActivity extends AppCompatActivity
         if(Firstzoom) {
             mMap.animateCamera(cameraUpdate);
             Firstzoom = false;
+        }
+
+        if(destinationchecker && emptycheck) {
+            button2click();
         }
     }
 
