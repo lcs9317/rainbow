@@ -40,23 +40,18 @@ public:
 
 
 private slots:
-    void goClicked();
 
-    void showCoordinates(double east, double north, bool saveMarker = true);
+
+
     //set marker to map and save marker in markers list
-    void setMarker(double east, double north, QString caption);
-    void errorOccured(const QString&);
+
     void webView(bool ok);
 
 
-    void on_lwMarkers_currentRowChanged(int currentRow);
-
-    void on_pbRemoveMarker_clicked();
-
-    void on_zoomSpinBox_valueChanged(int arg1);
+    void CrashWarning();
 
 private:
-    void getCoordinates(const QString& address);
+
 
 
 private:

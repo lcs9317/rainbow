@@ -15,9 +15,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_pForm = new Form(this);
     setCentralWidget(m_pForm);
 
-
-
-
 }
 
 MainWindow::~MainWindow()
