@@ -23,8 +23,8 @@ int comparator(Point , Point );
 void swap(Point* , Point*);
 bool LineIntersection(Line , Line );
 double length(double , double, double , double );
-bool iscrash(double **, double**);
-bool crash(double *, double*);
+bool iscrash(double *, double*);
+bool crash(double *, double*,bool);
 void coordinate_code();
 
 #endif // DBSERVER_H

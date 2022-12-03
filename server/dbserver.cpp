@@ -156,7 +156,10 @@ bool crash(double *coordinate, double *coordinate2, bool can_crash) {
     if(can_crash && result < 0.005)
         return can_crash;
     else
-        return can_crash - 1;
+        if(can_crash == 0)
+            return can_crash;
+        else
+            return can_crash - 1;
 
 }
 
@@ -188,7 +191,7 @@ void coordinate_code() {
 
     str1 = "function createPath(rows, columns) { \nvar arr = new Array(rows); \nfor (var i = 0; i < rows; i++) { \narr[i] = new Array(columns);\n}\nreturn arr;\n}";
     out << str1;
-    str5 =QString("\nvar polylinePath = createPath(%1,2);\n").arg(i);
+    str5 =QString("\nvar polylinePath = createPath(%1,2);\n").arg(i) + QString("var polyline = new Array(%1);\n").arg(i);
     out << str5;
     str2 = QString::fromUtf8("\npolylinePath = [ \n");
     out << str2;
@@ -207,16 +210,7 @@ void coordinate_code() {
     jsstr =str3 + str4;
     out << jsstr;
     if(coordinate[i + 1][0] < 0 && i >= 2)
-            {
-        str3 = QString::fromUtf8("[new google.maps.LatLng(%1, %2),\n").arg(coordinate[i+1][4]).arg(coordinate[i+1][5]);
-        str4 = QString::fromUtf8("new google.maps.LatLng(%1, %2)]\n").arg(coordinate[i+1][2]).arg(coordinate[i+1][3]);
-
-        jsstr =str3 + str4;
-        out << jsstr;
-
         break;
-    }
-
     else
         out << ",\n";
 

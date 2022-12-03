@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "geocode_data_manager.h"
+#include "dbserver.h"
 
 namespace Ui {
     class Form;
@@ -39,6 +40,7 @@ public:
 
 
 
+
 private slots:
 
 
@@ -46,11 +48,12 @@ private slots:
     //set marker to map and save marker in markers list
 
     void webView(bool ok);
-
+    bool** crashing();
 
     void CrashWarning();
 
-private:
+
+
 
 
 

@@ -1,13 +1,5 @@
 
 
-
-
-
-
-
-
-
-
     map = new google.maps.Map(
             document.getElementById("map"),
             {zoom: 8, center: start1}
@@ -44,7 +36,8 @@
     });
 
 
-    var polyline1 = new google.maps.Polyline({
+
+    polyline[0] = new google.maps.Polyline({
     path: polylinePath[0],
     strokeColor: "red",
     strokeOpacity: 0.8,
@@ -52,14 +45,27 @@
     map: map
 });
 
-    var polyline2 = new google.maps.Polyline({
+    polyline[1] = new google.maps.Polyline({
     path: polylinePath[1],
     strokeColor: "blue",
     strokeOpacity: 0.8,
     strokeWeight: 6,
     map: map
  });
-
+    polyline[2] = new google.maps.Polyline({
+    path: polylinePath[2],
+    strokeColor: "green",
+    strokeOpacity: 0.8,
+    strokeWeight: 6,
+    map: map
+    });
+    polyline[3] = new google.maps.Polyline({
+    path: polylinePath[3],
+    strokeColor: "black",
+    strokeOpacity: 0.8,
+    strokeWeight: 6,
+    map: map
+    });
 
 }
 

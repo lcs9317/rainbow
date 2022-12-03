@@ -16,20 +16,37 @@
 #include <fstream>
 
 
+
+
 Form::Form(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Form)
 {
+    double ** coor;
+    coor = send_coordinate();
+    bool **result;
+    int len = 0;
     ui->setupUi(this);
+
 
 
     QWebEngineSettings::globalSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
 
     ui->webView->setUrl(QUrl("qrc:/html/google_maps.html"));
-    connect(ui->textEdit,SIGNAL(),this,SLOT(CrashWarning()));
+
     connect(ui->webView->page(), SIGNAL(loadFinished(bool)), this, SLOT(webView(bool)));
 
-
+    ui->CrashWarning->setText("lists\n");
+    ui->CrashWarning->setText("what?");
+    ui->CrashWarning->append("wow");
+    ui->CrashWarning->append("ok");
+    result = crashing();
+    for(int i = 0; coor[i][0] < 0; i++ )
+        len+= 1;
+    for(int i= 0; i < len - 1; i++)
+        for(int j = i + 1; j < len; j++)
+            if(result[i][j] == 1)
+                ui->CrashWarning->append(QString("%1 and %2 can crash").arg(i).arg(j));
 
 }
 
@@ -63,11 +80,42 @@ void Form::webView(bool ok) {
 
 }
 
+bool** Form::crashing() {
+    double ** coordinate;
+    int len = 0;
 
+    bool **result;
+    coordinate = send_coordinate();
+    for(int i = 0; coordinate[i][0] < 0; i++)
+        len += 1;
+    result = new bool*[len];
+    for(int i = 0; i < len ; i++)
+        result[i] = new bool[len];
+    for(int i = 0; i < len - 1; i++) {
+        for(int j = i + 1; j < len; j++){
+            if(coordinate[i][0] == coordinate[j][0])
+                continue;
+            else {
+                result[i][j] = iscrash(coordinate[i],coordinate[j]);
+                if(result[i][j] == 1){
+                    result[i][j] = crash(coordinate[i],coordinate[j],result[i][j]);
+
+                }
+
+            }
+        }
+    }
+    return result;
+}
 
 void Form::CrashWarning()
-{   QTextEdit text;
-    text.setText("this is crash warning messages\n");
+{
+
+    QTextEdit *textedit = new QTextEdit;
+
+    textedit->setText("This is crashWarning text lists");
 
 }
+
+
 
