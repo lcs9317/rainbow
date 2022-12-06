@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/html">
+        <file>google_maps.html</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>dbserver.cpp</file>
+        <file>dbserver.h</file>
+    </qresource>
+</RCC>
