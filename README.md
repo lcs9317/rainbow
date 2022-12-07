@@ -8,12 +8,9 @@
 ----------------
 ## 기본적인 환경 셋팅법
 --------------
->https://www.qt.io/download  
->위 사이트에 들어가 Qt 다운로드(필자가 사용한 버전은 5.15.2이며 현재 프로그래밍 하는 모든 것들은 이 버전을 기준으로 작성됩니다.)  
->https://developer.android.com/studio?hl=ko&gclsrc=aw.ds&gclid=CjwKCAjw7p6aBhBiEiwA83fGurLAt9bAn2gd_q->M7j7MqdHcVeZE54WhXfpIzDQcTi40DapoUSBb1xoClM8QAvD_BwE  
->안드로이드 스튜디오 설치  
->https://visualstudio.microsoft.com/ko/downloads/  
->비주얼 스튜디오 설치(필자는 2019버전으로 진행하였으며 비주얼 스튜디오는 본인이 원하는 버전으로 사용하면 된다.)  
+>[Qt 다운로드](https://www.qt.io/download)(필자가 사용한 버전은 5.15.2이며 현재 프로그래밍 하는 모든 것들은 이 버전을 기준으로 작성됩니다.)  
+>[안드로이드 스튜디오 설치](https://developer.android.com/studio?hl=ko&gclsrc=aw.ds&gclid=CjwKCAjw7p6aBhBiEiwA83fGurLAt9bAn2gd_q->M7j7MqdHcVeZE54WhXfpIzDQcTi40DapoUSBb1xoClM8QAvD_BwE)  
+>[비주얼 스튜디오 설치](https://visualstudio.microsoft.com/ko/downloads/)(필자는 2019버전으로 진행하였으며 비주얼 스튜디오는 본인이 원하는 버전으로 사용하면 된다.)  
 
 #### Qt 설치시 반드시 Qt chart와 msvc 2019(본인이 설치한 비주얼 스튜디오의 버전)는 설치한다.  
 
