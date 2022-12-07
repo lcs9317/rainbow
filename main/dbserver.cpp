@@ -113,7 +113,7 @@ int iscrash(double *coordinate, double* coordinate2) {
 }
 double length(double x1, double y1, double x2, double y2){
     double result;
-    result = sqrt((pow((y2 - y1),2)/pow((x2 - x1),2)));
+    result = sqrt((pow((y2 - y1),2)+pow((x2 - x1),2)));
     return result;
 
 }
